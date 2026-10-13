@@ -1,0 +1,278 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+
+<title>To The Bone - For You</title>
+
+<style>
+:root {
+  --pink: #ff2e63;
+  --bg: #000;
+  --text: #fff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.container {
+  position: relative;
+  z-index: 2;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+h1 {
+  color: var(--pink);
+  font-size: clamp(1.8rem, 8vw, 2.5rem);
+  text-shadow: 0 0 20px var(--pink),
+               0 0 40px pink;
+  margin-bottom: 28px;
+}
+
+#lyric {
+  width: 100%;
+  max-width: 600px;
+  min-height: 190px;
+  font-size: clamp(1rem, 4vw, 1.4rem);
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+#status {
+  margin-top: 18px;
+  color: #ff9bb6;
+  font-size: 0.85rem;
+}
+
+.tap {
+  position: fixed;
+  z-index: 3;
+  bottom: 20px;
+  left: 0;
+  width: 100%;
+  padding: 0 12px;
+  color: #888;
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+
+.heart {
+  position: fixed;
+  top: -30px;
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform;
+  animation: fall linear forwards;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(540deg);
+  }
+}
+
+.explode {
+  position: fixed;
+  z-index: 4;
+  pointer-events: none;
+  font-size: 24px;
+  will-change: transform, opacity;
+  animation: boom 800ms ease-out forwards;
+}
+
+@keyframes boom {
+  to {
+    transform: translate(var(--x), var(--y))
+               scale(0.2) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heart {
+    animation-duration: 8s;
+  }
+
+  .explode {
+    animation-duration: 400ms;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<main class="container">
+  <h1>To The Bone 💖</h1>
+
+  <div id="lyric" aria-live="polite"></div>
+
+  <audio id="audio" loop preload="none">
+    <source src="./tothebone.mp3" type="audio/mpeg">
+  </audio>
+
+  <div id="status">Sentuh layar untuk memulai musik ♫</div>
+</main>
+
+<div class="tap">
+  Tap di mana aja buat ledakan love 💥
+</div>
+
+<script>
+"use strict";
+
+const lyricElement = document.getElementById("lyric");
+const audio = document.getElementById("audio");
+const statusElement = document.getElementById("status");
+
+// Gunakan teks buatan sendiri atau teks yang
+// memang kamu punya izin untuk digunakan.
+const lines = [
+  "You make the quiet feel like home.",
+  "Even the stars seem closer tonight.",
+  "If time slows down, let it be here.",
+  "",
+  "A thousand little moments,",
+  "one memory I want to keep.",
+  "And when the night gets quiet,",
+  "your smile is what I'll remember."
+];
+
+let lineIndex = 0;
+let charIndex = 0;
+let typingTimer;
+let audioStarted = false;
+let heartTimer;
+
+function typeText() {
+  if (lineIndex >= lines.length) {
+    clearTimeout(typingTimer);
+
+    typingTimer = setTimeout(() => {
+      lineIndex = 0;
+      charIndex = 0;
+      lyricElement.textContent = "";
+      typeText();
+    }, 1800);
+
+    return;
+  }
+
+  const currentLine = lines[lineIndex];
+
+  if (charIndex < currentLine.length) {
+    lyricElement.textContent += currentLine.charAt(charIndex);
+    charIndex++;
+
+    typingTimer = setTimeout(typeText, 75);
+  } else {
+    lyricElement.textContent += "\n";
+    lineIndex++;
+    charIndex = 0;
+
+    typingTimer = setTimeout(typeText, 650);
+  }
+}
+
+typeText();
+
+// Hati jatuh: interval sedikit lebih lambat
+// untuk mengurangi beban perangkat.
+function createHeart() {
+  const heart = document.createElement("span");
+  heart.className = "heart";
+  heart.textContent = Math.random() > 0.5 ? "💖" : "💗";
+
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.fontSize = (15 + Math.random() * 13) + "px";
+
+  const duration = 4 + Math.random() * 3;
+  heart.style.animationDuration = duration + "s";
+
+  document.body.appendChild(heart);
+
+  setTimeout(() => heart.remove(), duration * 1000 + 100);
+}
+
+heartTimer = setInterval(createHeart, 350);
+
+// Ledakan hati di lokasi sentuhan.
+function createExplosion(x, y) {
+  const fragment = document.createDocumentFragment();
+
+  for (let k = 0; k < 12; k++) {
+    const particle = document.createElement("span");
+    particle.className = "explode";
+    particle.textContent = "💖";
+
+    particle.style.left = x + "px";
+    particle.style.top = y + "px";
+
+    particle.style.setProperty(
+      "--x", (Math.random() - 0.5) * 240 + "px"
+    );
+
+    particle.style.setProperty(
+      "--y", (Math.random() - 0.5) * 240 + "px"
+    );
+
+    fragment.appendChild(particle);
+
+    setTimeout(() => particle.remove(), 900);
+  }
+
+  document.body.appendChild(fragment);
+}
+
+// Musik hanya dimulai saat interaksi pertama.
+async function startMusic() {
+  if (audioStarted) return;
+
+  try {
+    await audio.play();
+    audioStarted = true;
+    statusElement.textContent = "Music playing ♫ 💗";
+  } catch (error) {
+    statusElement.textContent =
+      "Musik belum bisa diputar. Periksa file MP3.";
+  }
+}
+
+document.addEventListener("pointerdown", (event) => {
+  createExplosion(event.clientX, event.clientY);
+  startMusic();
+});
+
+audio.addEventListener("error", () => {
+  statusElement.textContent =
+    "File musik tidak ditemukan atau tidak bisa dibaca.";
+});
+</script>
+
+</body>
+  </html>
+  
